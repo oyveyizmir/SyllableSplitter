@@ -1,0 +1,8 @@
+﻿{
+  "Vowels": "aeiouyäöü",
+  "CompoundVowels": "aa,ah,au,äh,äu,ee,eh,ei,eu,ieh,ih,ie,oh,öh,uh,üh",
+  "Consonants": "bcdfghjklmnprstvwxzß",
+  "CompoundConsonants": "tsch,sch,ch,ck,pf,qu",
+  "Prefixes": "heraus,außer,unter,nach,auf,aus,dar,her,hin,ver,vor,zer,an,be,da,ge,un",
+  "Separators": "-"
+}
