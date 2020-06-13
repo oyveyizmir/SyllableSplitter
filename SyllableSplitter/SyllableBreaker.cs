@@ -14,6 +14,10 @@ namespace SyllableSplitter
         private readonly string[] prefixes;
         private readonly char[] separators;
 
+        public readonly Dictionary<string, LetterCluster> ConsonantClusters = new Dictionary<string, LetterCluster>();
+        public List<string> ClustersByCount;
+        public List<string> ClustersByLength;
+
         public SyllableBreaker(Configuration conf)
         {
             this.conf = conf;
@@ -35,6 +39,17 @@ namespace SyllableSplitter
             }
             else
                 return BreakPrefixedWord(word);
+
+            //count clusters here? partial words are written for prefixes
+        }
+
+        public void ProcessClusters()
+        {
+            ClustersByCount = ConsonantClusters.OrderByDescending(p => p.Value.Words.Count).Select(x => x.Key).ToList();
+            ClustersByLength = ConsonantClusters.OrderByDescending(p => p.Value.Letters.Count).Select(x => x.Key).ToList();
+
+            /*ClustersByLength = ConsonantClusters.Select(p => new { p.Key, p.Value.Letters.Count })
+                .OrderByDescending(s => s.Key.Length).Select(x => x.Key).ToList();*/
         }
 
         private List<Syllable> BreakPrefixedWord(string word)
@@ -47,7 +62,7 @@ namespace SyllableSplitter
                         word = word.Substring(prefix.Length, word.Length - prefix.Length);
                         if (word.Length == 0)
                             return new List<Syllable>();
-                        syllables.AddRange(BreakWord(word));
+                        syllables.AddRange(BreakPrefixedWord(word));
                         return syllables;
                     }
 
@@ -88,6 +103,46 @@ namespace SyllableSplitter
                     throw new ArgumentException($"Unrecognizable letter {letter} in word {word}");
             }
 
+            foreach (var syl in syllables)
+            {
+                if (syl.Onset.Count > 0)
+                {
+                    string onset = string.Join(" ", syl.Onset);
+                    if (ConsonantClusters.ContainsKey(onset))
+                        ConsonantClusters[onset].Words.Add(syllables);
+                    else
+                        ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset, syllables);
+                }
+
+                if (syl.Coda.Count > 0)
+                {
+                    string coda = string.Join(" ", syl.Coda);
+                    if (ConsonantClusters.ContainsKey(coda))
+                        ConsonantClusters[coda].Words.Add(syllables);
+                    else
+                        ConsonantClusters[coda] = new LetterCluster(coda, syl.Coda, syllables);
+                }
+            }
+
+            /*var clusters = new Dictionary<string, LetterCluster>();
+
+            foreach (var syl in syllables)
+            {
+                if (syl.Onset.Count > 0)
+                {
+                    string onset = string.Join(" ", syl.Onset);
+                    if (!clusters.ContainsKey(onset))
+                        ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset);
+                }
+
+                if (syl.Coda.Count > 0)
+                {
+                    string coda = string.Join(" ", syl.Coda);
+                    if (!clusters.ContainsKey(coda))
+                        ConsonantClusters[coda] = new LetterCluster(coda, syl.Coda);
+                }
+            }*/
+
             for (int i = 0; i < syllables.Count - 1; i++)
             {
                 Syllable current = syllables[i];
@@ -104,6 +159,33 @@ namespace SyllableSplitter
                     current.Coda = current.Coda.GetRange(0, 1);
                 }
             }
+
+            /*foreach (LetterCluster cluster in clusters.Values)
+            {
+                if (ConsonantClusters.ContainsKey(cluster.Text))
+                    ConsonantClusters[cluster.Text].Words.Add(syllables);
+                else
+                    ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset);
+
+                cluster.Text = 
+                if (syl.Onset.Count > 0)
+                {
+                    string onset = string.Join(" ", syl.Onset);
+                    if (ConsonantClusters.ContainsKey(onset))
+                        ConsonantClusters[onset].Words.Add(syllables);
+                    else
+                        ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset);
+                }
+
+                if (syl.Coda.Count > 0)
+                {
+                    string coda = string.Join(" ", syl.Coda);
+                    if (ConsonantClusters.ContainsKey(coda))
+                        ConsonantClusters[coda].Words.Add(word);
+                    else
+                        ConsonantClusters[coda] = new List<string>() { word };
+                }
+            }*/
 
             return syllables;
         }

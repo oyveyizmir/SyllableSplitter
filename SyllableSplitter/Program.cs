@@ -26,9 +26,11 @@ außerordentlich=au-ßer-or-den-tlich
 erster=er-ster
 do not split: pf, st at the beginning and after prefix
 aufmerksamen=auf-mer-ksa-men
+än-de-ru-ngen ng at the beginning?
  */
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -72,9 +74,49 @@ namespace SyllableSplitter
             }
 
             reader.Close();
+
+            syllableBreaker.ProcessClusters();
+            PrintConsonantClusters(syllableBreaker);
         }
 
-        static void PrintSyllables(List<Syllable> syllables)
+        private static void PrintConsonantClusters(SyllableBreaker syllableBreaker)
+        {
+            using (var writer = new StreamWriter("clusters_by_count.txt", false, Encoding.UTF8))
+            {
+                foreach (var clusterText in syllableBreaker.ClustersByCount)
+                {
+                    var cluster = syllableBreaker.ConsonantClusters[clusterText];
+                    writer.Write($"{clusterText} ({cluster.Words.Count}): ");
+                    WriteWords(writer, cluster.Words);
+                    writer.WriteLine();
+                }
+            }
+
+            using (var writer = new StreamWriter("clusters_by_length.txt", false, Encoding.UTF8))
+            {
+                foreach (var clusterText in syllableBreaker.ClustersByLength)
+                {
+                    var cluster = syllableBreaker.ConsonantClusters[clusterText];
+                    writer.Write($"{clusterText} ({cluster.Words.Count}): ");
+                    WriteWords(writer, cluster.Words);
+                    writer.WriteLine();
+                }
+            }
+        }
+
+        private static void WriteWords(StreamWriter writer, List<List<Syllable>> words)
+        {
+            bool first = true;
+            foreach (var word in words)
+            {
+                if (!first)
+                    writer.Write(", ");
+                writer.Write(string.Join("-", word));
+                first = false;
+            }
+        }
+
+        private static void PrintSyllables(List<Syllable> syllables)
         {
             bool first = true;
             foreach (var syllable in syllables)

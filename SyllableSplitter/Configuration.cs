@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace SyllableSplitter
 {
+#pragma warning disable CS0649
+
     class Configuration
     {
         public string Vowels;
