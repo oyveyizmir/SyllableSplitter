@@ -16,6 +16,7 @@
 полководці=по-лко-вод-ці
 шіс-тде-сят
 фун-кці-йі
+не-вол-ьни-цю
 
 offensichtliche=of-fen-sich-tli-che
 blondkopf=blon-dkopf

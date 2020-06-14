@@ -18,6 +18,7 @@ namespace SyllableSplitter
         public string Separators;
         public string[] LetterClasses;
         public string[] RewriteRules;
+        public string[] SplitRules;
 
         public static Configuration Read(string file)
         {

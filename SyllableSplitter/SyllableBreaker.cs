@@ -16,6 +16,7 @@ namespace SyllableSplitter
         private readonly char[] separators;
         private readonly Dictionary<string, string[]> letterClasses = new Dictionary<string, string[]>();
         private readonly List<RewriteRule> rewriteRules = new List<RewriteRule>();
+        private readonly List<Regex> splitRules = new List<Regex>();
 
         public int MinClusterSize { get; set; } = 1;
 
@@ -66,6 +67,22 @@ namespace SyllableSplitter
                         default:
                             throw new ArgumentException($"Invalid rewrite rule {rule}");
                     }
+                }
+
+            if (conf.SplitRules != null)
+                foreach (var rule in conf.SplitRules)
+                {
+                    var ruleTerms = rule.Split('|');
+                    string codeTerm = ruleTerms[0];
+                    string onsetTerm = ruleTerms[1];
+                    if (codeTerm == "" && onsetTerm == "")
+                        continue;
+
+                    string codaPattern = codeTerm != "" ?  "(?<termCoda>" + codeTerm + ")" : "";
+                    string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + onsetTerm + ")" : "";
+
+                    var splitRuleRegex = new Regex(codaPattern + onsetPattern, RegexOptions.Compiled);
+                    splitRules.Add(splitRuleRegex);
                 }
         }
 
@@ -283,6 +300,28 @@ namespace SyllableSplitter
                 Syllable current = syllables[i];
                 Syllable next = syllables[i + 1];
 
+                foreach (var rule in splitRules)
+                {
+                    string cluster = string.Concat(current.Coda);
+                    var match = rule.Match(cluster);
+                    if (!match.Success)
+                        continue;
+
+                    string coda = match.Groups["termCoda"].Value;
+                    current.Coda = SplitIntoLetters(coda);
+
+                    string onset = match.Groups["termOnset"].Value;
+                    next.Onset = SplitIntoLetters(onset);
+
+                    break;
+                }
+            }
+
+            /*for (int i = firstSyllableIndex; i < syllables.Count - 1; i++)
+            {
+                Syllable current = syllables[i];
+                Syllable next = syllables[i + 1];
+
                 if (current.Coda.Count == 1)
                 {
                     next.Onset = current.Coda;
@@ -293,7 +332,7 @@ namespace SyllableSplitter
                     next.Onset = current.Coda.GetRange(1, current.Coda.Count - 1);
                     current.Coda = current.Coda.GetRange(0, 1);
                 }
-            }
+            }*/
         }
 
         private bool IsVowel(string letter) => vowels != null && vowels.Contains(letter);
