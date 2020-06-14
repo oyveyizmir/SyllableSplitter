@@ -23,13 +23,12 @@ namespace SyllableSplitter
 
         public SyllableBreaker(Configuration conf)
         {
-            this.conf = conf;
             if (conf.Vowels == null)
                 throw new ArgumentException("Vowels");
-            vowels = conf.Vowels.Split(',');
-            consonants = conf.Consonants?.Split(',');
-            prefixes = conf.Prefixes?.Split(',');
-            separators = conf.Separators?.ToCharArray();
+            if (conf.Consonants == null)
+                throw new ArgumentException("Consonants");
+
+            this.conf = conf;
 
             if (conf.LetterClasses != null)
                 foreach (var letterClass in conf.LetterClasses)
@@ -38,6 +37,12 @@ namespace SyllableSplitter
                         throw new ArgumentException($"Duplicate letter class {letterClass.Name}");
                     letterClasses.Add(letterClass.Name, letterClass.Items.Split(','));
                 }
+
+            vowels = ExpandLetterClasses(conf.Vowels).Split(',');
+            consonants = ExpandLetterClasses(conf.Consonants).Split(',');
+            prefixes = conf.Prefixes?.Split(',');
+            separators = conf.Separators?.ToCharArray();
+            
 
             if (conf.RewriteRules != null)
                 foreach (var rule in conf.RewriteRules)
@@ -123,6 +128,17 @@ namespace SyllableSplitter
 
             var rewriteRule = new RewriteRule(searchContext, searchClass, replacementTerm, replacementClass);
             rewriteRules.Add(rewriteRule);
+        }
+
+        private string ExpandLetterClasses(string str)
+        {
+            foreach (var letterClass in letterClasses)
+            {
+                string classItemsPatten = string.Join(",", letterClass.Value);
+                str = str.Replace(letterClass.Key, classItemsPatten);
+            }
+
+            return str;
         }
 
         private string RewriteLetters(string word)
