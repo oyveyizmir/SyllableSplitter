@@ -13,9 +13,7 @@ namespace SyllableSplitter
     class Configuration
     {
         public string Vowels;
-        public string CompoundVowels;
         public string Consonants;
-        public string CompoundConsonants;
         public string Prefixes;
         public string Separators;
         public LetterClass[] LetterClasses;

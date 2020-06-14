@@ -1,8 +1,6 @@
 ﻿{
-  "Vowels": "aeiouyäöü",
-  "CompoundVowels": "aa,ah,au,äh,äu,ee,eh,ei,eu,ieh,ih,ie,oh,öh,uh,üh",
-  "Consonants": "bcdfghjklmnprstvwxzß",
-  "CompoundConsonants": "tsch,sch,ch,ck,ng,pf,qu,tz",
+  "Vowels": "aa,ah,au,äh,äu,ee,eh,ei,eu,ieh,ih,ie,oh,öh,uh,üh,a,e,i,o,u,y,ä,ö,ü",
+  "Consonants": "tsch,sch,ch,ck,ng,pf,qu,tz,b,c,d,f,g,h,j,k,l,m,n,p,r,s,t,v,w,x,z,ß",
   "Prefixes": "heraus,außer,durch,unter,über,nach,auf,aus,dar,ein,ent,her,hin,ver,vor,zer,an,be,da,ge,un",
   "Separators": "-"
 }

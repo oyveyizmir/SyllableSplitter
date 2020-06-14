@@ -10,8 +10,8 @@ namespace SyllableSplitter
     class SyllableBreaker
     {
         private readonly Configuration conf;
-        private readonly string[] compoundConsonants;
-        private readonly string[] compoundVowels;
+        private readonly string[] consonants;
+        private readonly string[] vowels;
         private readonly string[] prefixes;
         private readonly char[] separators;
         private readonly Dictionary<string, string[]> letterClasses = new Dictionary<string, string[]>();
@@ -24,8 +24,10 @@ namespace SyllableSplitter
         public SyllableBreaker(Configuration conf)
         {
             this.conf = conf;
-            compoundConsonants = conf.CompoundConsonants?.Split(',');
-            compoundVowels = conf.CompoundVowels?.Split(',');
+            if (conf.Vowels == null)
+                throw new ArgumentException("Vowels");
+            vowels = conf.Vowels.Split(',');
+            consonants = conf.Consonants?.Split(',');
             prefixes = conf.Prefixes?.Split(',');
             separators = conf.Separators?.ToCharArray();
 
@@ -299,31 +301,9 @@ namespace SyllableSplitter
             return syllables;
         }
 
-        private bool IsVowel(string letter)
-        {
-            if (compoundVowels != null && compoundVowels.Contains(letter))
-                return true;
+        private bool IsVowel(string letter) => vowels != null && vowels.Contains(letter);
 
-            if (conf.Vowels != null)
-                foreach (char ch in conf.Vowels)
-                    if (ch.ToString() == letter)
-                        return true;
-
-            return false;
-        }
-
-        private bool IsConsonant(string letter)
-        {
-            if (compoundConsonants != null && compoundConsonants.Contains(letter))
-                return true;
-
-            if (conf.Consonants != null)
-                foreach (char ch in conf.Consonants)
-                    if (ch.ToString() == letter)
-                        return true;
-
-            return false;
-        }
+        private bool IsConsonant(string letter) => consonants != null && consonants.Contains(letter);
 
         private List<string> SplitIntoLetters(string word)
         {
@@ -333,8 +313,8 @@ namespace SyllableSplitter
             {
                 bool found = false;
 
-                if (compoundConsonants != null)
-                    foreach (string letter in compoundConsonants)
+                if (consonants != null)
+                    foreach (string letter in consonants)
                         if ((i + letter.Length <= word.Length) && word.Substring(i, letter.Length) == letter)
                         {
                             letters.Add(letter);
@@ -346,8 +326,8 @@ namespace SyllableSplitter
                 if (found)
                     continue;
 
-                if (compoundVowels != null)
-                    foreach (string letter in compoundVowels)
+                if (vowels != null)
+                    foreach (string letter in vowels)
                         if ((i + letter.Length <= word.Length) && word.Substring(i, letter.Length) == letter)
                         {
                             letters.Add(letter);
