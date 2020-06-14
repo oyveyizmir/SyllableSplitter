@@ -33,9 +33,14 @@ namespace SyllableSplitter
             if (conf.LetterClasses != null)
                 foreach (var letterClass in conf.LetterClasses)
                 {
-                    if (letterClasses.ContainsKey(letterClass.Name))
-                        throw new ArgumentException($"Duplicate letter class {letterClass.Name}");
-                    letterClasses.Add(letterClass.Name, letterClass.Items.Split(','));
+                    var classTerms = letterClass.Split('=');
+                    if (classTerms.Length != 2)
+                        throw new ArgumentException($"Cannot parse letter class {letterClass}");
+                    var className = classTerms[0];
+                    var classItems = classTerms[1];
+                    if (letterClasses.ContainsKey(className))
+                        throw new ArgumentException($"Duplicate letter class {className}");
+                    letterClasses.Add(className, classItems.Split(','));
                 }
 
             vowels = ExpandLetterClasses(conf.Vowels).Split(',');
