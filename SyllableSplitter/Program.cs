@@ -15,6 +15,7 @@
 божественній=бо-жес-твен-ній
 полководці=по-лко-вод-ці
 шіс-тде-сят
+фун-кці-йі
 
 offensichtliche=of-fen-sich-tli-che
 blondkopf=blon-dkopf

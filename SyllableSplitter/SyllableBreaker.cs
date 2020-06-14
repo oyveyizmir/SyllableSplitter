@@ -17,6 +17,8 @@ namespace SyllableSplitter
         private readonly Dictionary<string, string[]> letterClasses = new Dictionary<string, string[]>();
         private readonly List<RewriteRule> rewriteRules = new List<RewriteRule>();
 
+        public int MinClusterSize { get; set; } = 1;
+
         public readonly Dictionary<string, LetterCluster> ConsonantClusters = new Dictionary<string, LetterCluster>();
         public List<string> ClustersByCount;
         public List<string> ClustersByLength;
@@ -217,6 +219,7 @@ namespace SyllableSplitter
 
             var letters = SplitIntoLetters(word);
 
+            int firstSyllableIndex = syllables.Count;
             Syllable syllable = new Syllable();
             syllables.Add(syllable);
 
@@ -243,9 +246,11 @@ namespace SyllableSplitter
                     throw new ArgumentException($"Unrecognizable letter {letter} in word {word}");
             }
 
-            foreach (var syl in syllables)
+            for (int i = firstSyllableIndex; i < syllables.Count; i++)
             {
-                if (syl.Onset.Count > 0)
+                Syllable syl = syllables[i];
+
+                if (syl.Onset.Count >= MinClusterSize)
                 {
                     string onset = string.Join(" ", syl.Onset);
                     if (ConsonantClusters.ContainsKey(onset))
@@ -257,7 +262,7 @@ namespace SyllableSplitter
                         ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset, syllables);
                 }
 
-                if (syl.Coda.Count > 0)
+                if (syl.Coda.Count >= MinClusterSize)
                 {
                     string coda = string.Join(" ", syl.Coda);
                     if (ConsonantClusters.ContainsKey(coda))
@@ -289,7 +294,7 @@ namespace SyllableSplitter
                 }
             }*/
 
-            for (int i = 0; i < syllables.Count - 1; i++)
+            for (int i = firstSyllableIndex; i < syllables.Count - 1; i++)
             {
                 Syllable current = syllables[i];
                 Syllable next = syllables[i + 1];
