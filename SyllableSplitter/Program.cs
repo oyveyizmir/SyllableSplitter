@@ -13,6 +13,7 @@
 криводзьобих don't split дз,дзь,дж
 андрій=ан-дрій
 божественній=бо-жес-твен-ній
+п'ятнадцята=п-ят-над-ця-та
 
 offensichtliche=of-fen-sich-tli-che
 blondkopf=blon-dkopf
@@ -27,6 +28,19 @@ erster=er-ster
 do not split: pf, st at the beginning and after prefix
 aufmerksamen=auf-mer-ksa-men
 än-de-ru-ngen ng at the beginning?
+sol-lte compound ll-t
+in-ter-pun-kti-on kt not at the beginning
+schrän-kter nk-t
+freun-dli-che nd-l
+kon-nte nn-t
+knö-pfen kn only at the beginning of a word
+fi-nger-chen ng never at the beginning of a syllable
+zit-ter-nden ng never at the begining of a syllable rn-d
+or-den-tlich nt-l
+kon-trol-liert nt-r
+fün-ftes nün-ftig nf-t
+den-kli-chen nk-l
+ng-
  */
 using System;
 using System.Collections.Generic;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace SyllableSplitter
@@ -13,6 +14,8 @@ namespace SyllableSplitter
         private readonly string[] compoundVowels;
         private readonly string[] prefixes;
         private readonly char[] separators;
+        private readonly Dictionary<string, string[]> letterClasses = new Dictionary<string, string[]>();
+        private readonly List<RewriteRule> rewriteRules = new List<RewriteRule>();
 
         public readonly Dictionary<string, LetterCluster> ConsonantClusters = new Dictionary<string, LetterCluster>();
         public List<string> ClustersByCount;
@@ -25,6 +28,31 @@ namespace SyllableSplitter
             compoundVowels = conf.CompoundVowels?.Split(',');
             prefixes = conf.Prefixes?.Split(',');
             separators = conf.Separators?.ToCharArray();
+
+            if (conf.LetterClasses != null)
+                foreach (var letterClass in conf.LetterClasses)
+                {
+                    if (letterClasses.ContainsKey(letterClass.Name))
+                        throw new ArgumentException($"Duplicate letter class {letterClass.Name}");
+                    letterClasses.Add(letterClass.Name, letterClass.Items.Split(','));
+                }
+
+            if (conf.RewriteRules != null)
+                foreach (var rule in conf.RewriteRules)
+                {
+                    var ruleTerms = rule.Split('/');
+                    switch (ruleTerms.Length)
+                    {
+                        case 2:
+                            ParseRule(ruleTerms[0], ruleTerms[1], null);
+                            break;
+                        case 3:
+                            ParseRule(ruleTerms[0], ruleTerms[1], ruleTerms[2]);
+                            break;
+                        default:
+                            throw new ArgumentException($"Invalid rewrite rule {rule}");
+                    }
+                }
         }
 
         public List<Syllable> BreakWord(string word)
@@ -34,11 +62,11 @@ namespace SyllableSplitter
                 string[] parts = word.Split(separators);
                 var syllables = new List<Syllable>();
                 foreach (string part in parts)
-                    syllables.AddRange(BreakPrefixedWord(part));
+                    syllables.AddRange(BreakPrefixedWord(RewriteLetters(part)));
                 return syllables;
             }
             else
-                return BreakPrefixedWord(word);
+                return BreakPrefixedWord(RewriteLetters(word));
 
             //count clusters here? partial words are written for prefixes
         }
@@ -50,6 +78,87 @@ namespace SyllableSplitter
 
             /*ClustersByLength = ConsonantClusters.Select(p => new { p.Key, p.Value.Letters.Count })
                 .OrderByDescending(s => s.Key.Length).Select(x => x.Key).ToList();*/
+        }
+
+        private void ParseRule(string searchPattern, string replacementTerm, string searchContext)
+        {
+            string searchClass = null;
+            string replacementClass = FindLetterClass(replacementTerm); //TODO: make sure there's only 1 replacement class
+            if (replacementClass == null)
+            {
+                foreach (var letterClass in letterClasses)
+                {
+                    string classItemsPatten = "(" + string.Join("|", letterClass.Value) + ")";
+                    searchPattern = searchPattern.Replace(letterClass.Key, classItemsPatten);
+                }
+            }
+            else
+            {
+                searchClass = FindLetterClass(searchPattern); //TODO: make sure there's only 1 search class
+                if (searchClass == null)
+                    throw new ArgumentException($"No search letter class found in rewrite rule {searchPattern}/{replacementTerm}/{searchContext}");
+                //TODO: check then search and replacement classes have the same length or replacement is bigger
+                string classItemsPatten = "(?<LetterClass>" + string.Join("|", letterClasses[searchClass]) + ")";
+                searchPattern = searchPattern.Replace(searchClass, classItemsPatten);
+            }
+
+            if (searchContext == null)
+            {
+                searchContext = "(?<Replacement>" + searchPattern + ")";
+            }
+            else
+            {
+                if (searchContext.IndexOf('_') < 0)
+                    throw new ArgumentException($"No substitution character (_) in rule {searchPattern}/{replacementTerm}/{searchContext}");
+
+                searchContext = searchContext.Replace("_", "(?<Replacement>" + searchPattern + ")");
+                foreach (var letterClass in letterClasses)
+                {
+                    string classItemsPatten = "(" + string.Join("|", letterClass.Value) + ")";
+                    searchContext = searchContext.Replace(letterClass.Key, classItemsPatten);
+                }
+            }
+
+            var rewriteRule = new RewriteRule(searchContext, searchClass, replacementTerm, replacementClass);
+            rewriteRules.Add(rewriteRule);
+        }
+
+        private string RewriteLetters(string word)
+        {
+            foreach (var rule in rewriteRules)
+            {
+                word = rule.SearchRegex.Replace(word, m =>
+                    {
+                        string insert;
+
+                        if (rule.ReplacementClass == null)
+                            insert = rule.ReplacementTerm;
+                        else
+                        {
+                            var replacementLetterClass = letterClasses[rule.ReplacementClass];
+                            var searchLetterClass = letterClasses[rule.SearchClass];
+                            var foundLetter = m.Groups["LetterClass"].Value;
+                            var letterIndex = Array.FindIndex(searchLetterClass, x => x == foundLetter);
+                            var replacementLetter = replacementLetterClass[letterIndex];
+                            insert = rule.ReplacementTerm.Replace(rule.ReplacementClass, replacementLetter);
+                        }
+
+                        int insertIndex = m.Groups["Replacement"].Index - m.Groups[0].Index;
+                        string replacement = m.Groups[0].Value.Remove(insertIndex, m.Groups["Replacement"].Length);
+                        replacement = replacement.Insert(insertIndex, insert);
+                        return replacement;
+                    });
+            }
+
+            return word;
+        }
+
+        private string FindLetterClass(string term)
+        {
+            foreach (var letterClass in letterClasses.Keys)
+                if (term.IndexOf(letterClass) >= 0)
+                    return letterClass;
+            return null;
         }
 
         private List<Syllable> BreakPrefixedWord(string word)

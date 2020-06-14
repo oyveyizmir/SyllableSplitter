@@ -50,9 +50,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration.cs" />
+    <Compile Include="LetterClass.cs" />
     <Compile Include="LetterCluster.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RewriteRule.cs" />
     <Compile Include="Syllable.cs" />
     <Compile Include="SyllableBreaker.cs" />
     <Compile Include="WordReader.cs" />

@@ -18,6 +18,8 @@ namespace SyllableSplitter
         public string CompoundConsonants;
         public string Prefixes;
         public string Separators;
+        public LetterClass[] LetterClasses;
+        public string[] RewriteRules;
 
         public static Configuration Read(string file)
         {
