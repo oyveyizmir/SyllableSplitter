@@ -14,6 +14,7 @@
 андрій=ан-дрій
 божественній=бо-жес-твен-ній
 полководці=по-лко-вод-ці
+шіс-тде-сят
 
 offensichtliche=of-fen-sich-tli-che
 blondkopf=blon-dkopf

@@ -69,17 +69,18 @@ namespace SyllableSplitter
 
         public List<Syllable> BreakWord(string word)
         {
-            if (conf.Separators != null)
+            var syllables = new List<Syllable>();
+
+            if (conf.Separators != null && conf.Separators.Length != 0)
             {
                 string[] parts = word.Split(separators);
-                var syllables = new List<Syllable>();
                 foreach (string part in parts)
-                    syllables.AddRange(BreakPrefixedWord(RewriteLetters(part)));
-                return syllables;
+                    BreakPrefixedWord(RewriteLetters(part), syllables);
             }
             else
-                return BreakPrefixedWord(RewriteLetters(word));
+                BreakPrefixedWord(RewriteLetters(word), syllables);
 
+            return syllables;
             //count clusters here? partial words are written for prefixes
         }
 
@@ -184,29 +185,36 @@ namespace SyllableSplitter
             return null;
         }
 
-        private List<Syllable> BreakPrefixedWord(string word)
+        private void BreakPrefixedWord(string word, List<Syllable> syllables)
         {
-            if (prefixes != null)
-                foreach (string prefix in prefixes)
-                    if (word.StartsWith(prefix))
-                    {
-                        var syllables = Break(prefix);
-                        word = word.Substring(prefix.Length, word.Length - prefix.Length);
-                        if (word.Length == 0)
-                            return new List<Syllable>();
-                        syllables.AddRange(BreakPrefixedWord(word));
-                        return syllables;
-                    }
-
-            return Break(word);
+            string prefix = FindPrefix(word);
+            if (prefix != null)
+            {
+                Break(prefix, syllables);
+                word = word.Remove(0, prefix.Length);
+                BreakPrefixedWord(word, syllables);
+            }
+            else
+                Break(word, syllables);
         }
 
-        private List<Syllable> Break(string word)
+        private string FindPrefix(string word)
+        {
+            if (prefixes == null)
+                return null;
+
+            foreach (string prefix in prefixes)
+                if (word.StartsWith(prefix))
+                    return prefix;
+
+            return null;
+        }
+
+        private void Break(string word, List<Syllable> syllables)
         {
             if (word.Length == 0)
-                return new List<Syllable>();
+                return;
 
-            var syllables = new List<Syllable>();
             var letters = SplitIntoLetters(word);
 
             Syllable syllable = new Syllable();
@@ -241,7 +249,10 @@ namespace SyllableSplitter
                 {
                     string onset = string.Join(" ", syl.Onset);
                     if (ConsonantClusters.ContainsKey(onset))
-                        ConsonantClusters[onset].Words.Add(syllables);
+                    {
+                        if (!ConsonantClusters[onset].Words.Contains(syllables))
+                            ConsonantClusters[onset].Words.Add(syllables);
+                    }
                     else
                         ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset, syllables);
                 }
@@ -250,7 +261,10 @@ namespace SyllableSplitter
                 {
                     string coda = string.Join(" ", syl.Coda);
                     if (ConsonantClusters.ContainsKey(coda))
-                        ConsonantClusters[coda].Words.Add(syllables);
+                    {
+                        if (!ConsonantClusters[coda].Words.Contains(syllables))
+                            ConsonantClusters[coda].Words.Add(syllables);
+                    }
                     else
                         ConsonantClusters[coda] = new LetterCluster(coda, syl.Coda, syllables);
                 }
@@ -318,8 +332,6 @@ namespace SyllableSplitter
                         ConsonantClusters[coda] = new List<string>() { word };
                 }
             }*/
-
-            return syllables;
         }
 
         private bool IsVowel(string letter) => vowels != null && vowels.Contains(letter);
