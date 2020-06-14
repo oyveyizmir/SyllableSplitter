@@ -222,6 +222,8 @@ namespace SyllableSplitter
             int firstSyllableIndex = syllables.Count;
             Syllable syllable = new Syllable();
             syllables.Add(syllable);
+            if (syllables.Count >= 2)
+                syllables[syllables.Count - 2].Next = syllable;
 
             foreach (string letter in letters)
             {
@@ -233,6 +235,7 @@ namespace SyllableSplitter
                     {
                         syllable = new Syllable() { Nucleus = letter };
                         syllables.Add(syllable);
+                        syllables[syllables.Count - 2].Next = syllable;
                     }
                 }
                 else if (IsConsonant(letter))
@@ -275,25 +278,6 @@ namespace SyllableSplitter
                 }
             }
 
-            /*var clusters = new Dictionary<string, LetterCluster>();
-
-            foreach (var syl in syllables)
-            {
-                if (syl.Onset.Count > 0)
-                {
-                    string onset = string.Join(" ", syl.Onset);
-                    if (!clusters.ContainsKey(onset))
-                        ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset);
-                }
-
-                if (syl.Coda.Count > 0)
-                {
-                    string coda = string.Join(" ", syl.Coda);
-                    if (!clusters.ContainsKey(coda))
-                        ConsonantClusters[coda] = new LetterCluster(coda, syl.Coda);
-                }
-            }*/
-
             for (int i = firstSyllableIndex; i < syllables.Count - 1; i++)
             {
                 Syllable current = syllables[i];
@@ -310,33 +294,6 @@ namespace SyllableSplitter
                     current.Coda = current.Coda.GetRange(0, 1);
                 }
             }
-
-            /*foreach (LetterCluster cluster in clusters.Values)
-            {
-                if (ConsonantClusters.ContainsKey(cluster.Text))
-                    ConsonantClusters[cluster.Text].Words.Add(syllables);
-                else
-                    ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset);
-
-                cluster.Text = 
-                if (syl.Onset.Count > 0)
-                {
-                    string onset = string.Join(" ", syl.Onset);
-                    if (ConsonantClusters.ContainsKey(onset))
-                        ConsonantClusters[onset].Words.Add(syllables);
-                    else
-                        ConsonantClusters[onset] = new LetterCluster(onset, syl.Onset);
-                }
-
-                if (syl.Coda.Count > 0)
-                {
-                    string coda = string.Join(" ", syl.Coda);
-                    if (ConsonantClusters.ContainsKey(coda))
-                        ConsonantClusters[coda].Words.Add(word);
-                    else
-                        ConsonantClusters[coda] = new List<string>() { word };
-                }
-            }*/
         }
 
         private bool IsVowel(string letter) => vowels != null && vowels.Contains(letter);

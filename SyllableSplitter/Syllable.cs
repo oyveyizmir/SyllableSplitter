@@ -11,6 +11,9 @@ namespace SyllableSplitter
         public List<string> Onset = new List<string>();
         public string Nucleus;
         public List<string> Coda = new List<string>();
+        public Syllable Next;
+
+        public string Cluster => string.Concat(Coda) + Next != null ? string.Concat(Next.Onset) : string.Empty;
 
         public override string ToString()
         {
