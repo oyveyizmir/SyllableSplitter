@@ -82,7 +82,7 @@ namespace SyllableSplitter
                     string codaPattern = codeTerm != "" ? "(?<termCoda>" + ToLetterRegex(codeTerm) + ")" : "";
                     string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + ToLetterRegex(onsetTerm) + ")" : "";
 
-                    var splitRuleRegex = new Regex(codaPattern + onsetPattern, RegexOptions.Compiled);
+                    var splitRuleRegex = new Regex("^" + codaPattern + onsetPattern + "$", RegexOptions.Compiled);
                     splitRules.Add(splitRuleRegex);
                 }
         }

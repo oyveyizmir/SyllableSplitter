@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using SyllableSplitter;
@@ -20,6 +21,7 @@ namespace SyllableSplitterUnitTests
                 while ((line = reader.ReadLine()) != null)
                 {
                     var parts = line.Split(',');
+                    parts = parts.Take(2).Select(x => x.Trim()).ToArray();
                     yield return parts;
                 }
             }
