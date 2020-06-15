@@ -12,6 +12,7 @@ namespace SyllableSplitter
         private readonly Configuration conf;
         private readonly string[] consonants;
         private readonly string[] vowels;
+        private readonly string[] alphabet;
         private readonly string[] prefixes;
         private readonly char[] separators;
         private readonly Dictionary<string, string[]> letterClasses = new Dictionary<string, string[]>();
@@ -48,9 +49,9 @@ namespace SyllableSplitter
 
             vowels = ExpandLetterClasses(conf.Vowels).Split(',');
             consonants = ExpandLetterClasses(conf.Consonants).Split(',');
+            alphabet = vowels.Concat(consonants).ToArray();
             prefixes = conf.Prefixes?.Split(',');
             separators = conf.Separators?.ToCharArray();
-            
 
             if (conf.RewriteRules != null)
                 foreach (var rule in conf.RewriteRules)
@@ -78,8 +79,8 @@ namespace SyllableSplitter
                     if (codeTerm == "" && onsetTerm == "")
                         continue;
 
-                    string codaPattern = codeTerm != "" ?  "(?<termCoda>" + codeTerm + ")" : "";
-                    string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + onsetTerm + ")" : "";
+                    string codaPattern = codeTerm != "" ? "(?<termCoda>" + ToLetterRegex(codeTerm) + ")" : "";
+                    string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + ToLetterRegex(onsetTerm) + ")" : "";
 
                     var splitRuleRegex = new Regex(codaPattern + onsetPattern, RegexOptions.Compiled);
                     splitRules.Add(splitRuleRegex);
@@ -111,6 +112,27 @@ namespace SyllableSplitter
             /*ClustersByLength = ConsonantClusters.Select(p => new { p.Key, p.Value.Letters.Count })
                 .OrderByDescending(s => s.Key.Length).Select(x => x.Key).ToList();*/
         }
+
+        private string ToLetterRegex(string pattern)
+        {
+            var sb = new StringBuilder(pattern);
+
+            //TODO: expand letter classes into (?:\[au\]|\[eu\]|\[oi\])
+            foreach (var letterClass in letterClasses)
+            {
+                string letterClassPattern = LetterClassToRegex(letterClass.Value);
+                sb.Replace(letterClass.Key, letterClassPattern);
+            }
+
+            //TODO: expand letters into (?:\[ng\])
+            foreach (string letter in alphabet)
+                sb.Replace(letter, @"(?:\[" + letter + @"\])");
+
+            sb.Replace(".", @"(?:\[[^\]]+\])");
+            return sb.ToString();
+        }
+
+        private string LetterClassToRegex(string[] letterClass) => "(?:" + string.Join("|", letterClass) + ")";
 
         private void ParseRule(string searchPattern, string replacementTerm, string searchContext)
         {
@@ -302,37 +324,51 @@ namespace SyllableSplitter
 
                 foreach (var rule in splitRules)
                 {
-                    string cluster = string.Concat(current.Coda);
+                    string cluster = BracketLetters(current.Coda);
                     var match = rule.Match(cluster);
-                    if (!match.Success)
-                        continue;
+                    if (match.Success)
+                    {
+                        string coda = match.Groups["termCoda"].Value;
+                        current.Coda = UnbracketLetters(coda);
 
-                    string coda = match.Groups["termCoda"].Value;
-                    current.Coda = SplitIntoLetters(coda);
+                        string onset = match.Groups["termOnset"].Value;
+                        next.Onset = UnbracketLetters(onset);
 
-                    string onset = match.Groups["termOnset"].Value;
-                    next.Onset = SplitIntoLetters(onset);
-
-                    break;
+                        break;
+                    }
                 }
             }
+        }
 
-            /*for (int i = firstSyllableIndex; i < syllables.Count - 1; i++)
+        private string BracketLetters(List<string> letters)
+        {
+            var sb = new StringBuilder();
+            foreach (var letter in letters)
+                sb.Append("[" + letter + "]");
+            return sb.ToString();
+        }
+
+        private List<string> UnbracketLetters(string bracketedLetters)
+        {
+            var word = new List<string>();
+            int openingBracket = 0;
+
+            while (openingBracket < bracketedLetters.Length)
             {
-                Syllable current = syllables[i];
-                Syllable next = syllables[i + 1];
+                if (bracketedLetters[openingBracket] != '[')
+                    throw new ArgumentException($"Opening backet is expected in {bracketedLetters} at position {openingBracket}");
 
-                if (current.Coda.Count == 1)
-                {
-                    next.Onset = current.Coda;
-                    current.Coda = new List<string>();
-                }
-                else if (current.Coda.Count > 1)
-                {
-                    next.Onset = current.Coda.GetRange(1, current.Coda.Count - 1);
-                    current.Coda = current.Coda.GetRange(0, 1);
-                }
-            }*/
+                int closingBacket = bracketedLetters.IndexOf(']', openingBracket + 1);
+                if (closingBacket < 0)
+                    throw new ArgumentException($"Closing backet is expected in {bracketedLetters} after position {openingBracket}");
+
+                string letter = bracketedLetters.Substring(openingBracket + 1, closingBacket - openingBracket - 1);
+                word.Add(letter);
+
+                openingBracket = closingBacket + 1;
+            }
+
+            return word;
         }
 
         private bool IsVowel(string letter) => vowels != null && vowels.Contains(letter);
