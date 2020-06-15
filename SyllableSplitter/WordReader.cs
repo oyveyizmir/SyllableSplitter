@@ -17,10 +17,8 @@ namespace SyllableSplitter
             EndOfInput
         }
 
-        //private static final Logger logger = LogManager.getLogger();
-
         private TextReader scanner;
-        private Regex wordPattern = new Regex("\\b\\p{L}[-'\\p{L}+]*\\b", RegexOptions.Compiled);
+        private Regex wordPattern = new Regex(@"\b\p{L}[-'\p{L}+]*\b", RegexOptions.Compiled);
         private Match match;
         private State state = State.LineRequired;
 
@@ -75,8 +73,6 @@ namespace SyllableSplitter
             string line = scanner.ReadLine()?.Trim();
             if (line == null)
                 return null;
-
-            //logger.debug("Read line: " + line);
 
             if (line.EndsWith("-"))
                 return line.Substring(0, line.Length - 1) + ReadLine();

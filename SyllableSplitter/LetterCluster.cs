@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SyllableSplitter
 {
-    class LetterCluster
+    public class LetterCluster
     {
         public string Text;
         public List<string> Letters;

@@ -16,6 +16,8 @@
 шіс-тде-сят
 фун-кці-йі
 не-вол-ьни-цю
+test:
+суп-ро-во-див
 
 offensichtliche=of-fen-sich-tli-che
 blondkopf=blon-dkopf

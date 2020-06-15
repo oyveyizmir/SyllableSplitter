@@ -10,7 +10,7 @@ namespace SyllableSplitter
 {
 #pragma warning disable CS0649
 
-    class Configuration
+    public class Configuration
     {
         public string Vowels;
         public string Consonants;

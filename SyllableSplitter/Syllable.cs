@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SyllableSplitter
 {
-    class Syllable
+    public class Syllable
     {
         public List<string> Onset = new List<string>();
         public string Nucleus;

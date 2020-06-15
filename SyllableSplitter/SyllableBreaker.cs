@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SyllableSplitter
 {
-    class SyllableBreaker
+    public class SyllableBreaker
     {
         private readonly Configuration conf;
         private readonly string[] consonants;
