@@ -25,6 +25,8 @@ namespace SyllableSplitter
         public List<string> ClustersByCount;
         public List<string> ClustersByLength;
 
+        public bool TraceOn { get; set; }
+
         public SyllableBreaker(Configuration conf)
         {
             if (conf.Vowels == null)
@@ -50,7 +52,7 @@ namespace SyllableSplitter
             vowels = ExpandLetterClasses(conf.Vowels).Split(',');
             consonants = ExpandLetterClasses(conf.Consonants).Split(',');
             alphabet = vowels.Concat(consonants).ToArray();
-            prefixes = conf.Prefixes?.Split(',');
+            prefixes = conf.Prefixes?.Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             separators = conf.Separators?.ToCharArray();
 
             if (conf.RewriteRules != null)
@@ -60,10 +62,10 @@ namespace SyllableSplitter
                     switch (ruleTerms.Length)
                     {
                         case 2:
-                            ParseRule(ruleTerms[0], ruleTerms[1], null);
+                            ParseRewriteRule(ruleTerms[0], ruleTerms[1], null);
                             break;
                         case 3:
-                            ParseRule(ruleTerms[0], ruleTerms[1], ruleTerms[2]);
+                            ParseRewriteRule(ruleTerms[0], ruleTerms[1], ruleTerms[2]);
                             break;
                         default:
                             throw new ArgumentException($"Invalid rewrite rule {rule}");
@@ -73,7 +75,7 @@ namespace SyllableSplitter
             if (conf.SplitRules != null)
                 foreach (var rule in conf.SplitRules)
                 {
-                    var ruleTerms = rule.Split('|');
+                    var ruleTerms = rule.Split('/');
                     string codeTerm = ruleTerms[0];
                     string onsetTerm = ruleTerms[1];
                     if (codeTerm == "" && onsetTerm == "")
@@ -89,6 +91,9 @@ namespace SyllableSplitter
 
         public List<Syllable> BreakWord(string word)
         {
+            if (TraceOn)
+                Console.WriteLine($"Splitting word {word}");
+
             var syllables = new List<Syllable>();
 
             if (conf.Separators != null && conf.Separators.Length != 0)
@@ -99,6 +104,9 @@ namespace SyllableSplitter
             }
             else
                 BreakPrefixedWord(RewriteLetters(word), syllables);
+
+            if (TraceOn)
+                Console.WriteLine($"Word {word} split into syllables {ToString(syllables)}");
 
             return syllables;
             //count clusters here? partial words are written for prefixes
@@ -112,6 +120,24 @@ namespace SyllableSplitter
             /*ClustersByLength = ConsonantClusters.Select(p => new { p.Key, p.Value.Letters.Count })
                 .OrderByDescending(s => s.Key.Length).Select(x => x.Key).ToList();*/
         }
+
+        public static string ToString(List<Syllable> syllables)
+        {
+            var sb = new StringBuilder();
+
+            bool first = true;
+            foreach (var syllable in syllables)
+            {
+                if (!first)
+                    sb.Append("-");
+                sb.Append(syllable);
+                first = false;
+            }
+
+            return sb.ToString();
+        }
+
+        private static string ToString(List<string> letters) => string.Concat(letters);
 
         private string ToLetterRegex(string pattern)
         {
@@ -134,7 +160,7 @@ namespace SyllableSplitter
 
         private string LetterClassToRegex(string[] letterClass) => "(?:" + string.Join("|", letterClass) + ")";
 
-        private void ParseRule(string searchPattern, string replacementTerm, string searchContext)
+        private void ParseRewriteRule(string searchPattern, string replacementTerm, string searchContext)
         {
             string searchClass = null;
             string replacementClass = FindLetterClass(replacementTerm); //TODO: make sure there's only 1 replacement class
@@ -246,13 +272,20 @@ namespace SyllableSplitter
 
             foreach (string prefix in prefixes)
                 if (word.StartsWith(prefix))
+                {
+                    if (TraceOn)
+                        Console.WriteLine($"Found prefix {prefix}");
                     return prefix;
+                }
 
             return null;
         }
 
         private void Break(string word, List<Syllable> syllables)
         {
+            if (TraceOn)
+                Console.WriteLine($"Breaking word {word}");
+
             if (word.Length == 0)
                 return;
 
@@ -317,13 +350,21 @@ namespace SyllableSplitter
                 }
             }
 
+            if (TraceOn)
+                Console.WriteLine("Applying split rules");
+
             for (int i = firstSyllableIndex; i < syllables.Count - 1; i++)
             {
                 Syllable current = syllables[i];
                 Syllable next = syllables[i + 1];
 
-                foreach (var rule in splitRules)
+                if (TraceOn)
+                    Console.WriteLine($"Splitting cluster {ToString(current.Coda)}");
+
+                for (int j = 0; j < splitRules.Count; j++)
                 {
+                    var rule = splitRules[j];
+
                     string cluster = BracketLetters(current.Coda);
                     var match = rule.Match(cluster);
                     if (match.Success)
@@ -333,6 +374,9 @@ namespace SyllableSplitter
 
                         string onset = match.Groups["termOnset"].Value;
                         next.Onset = UnbracketLetters(onset);
+
+                        if (TraceOn)
+                            Console.WriteLine($"Rule {conf.SplitRules[j]} matched. Coda: {ToString(current.Coda)}, Onset: {ToString(next.Onset)}");
 
                         break;
                     }

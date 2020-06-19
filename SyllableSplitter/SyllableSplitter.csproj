@@ -63,6 +63,9 @@
     <None Include="Config\de.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Config\ua2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Config\ua.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

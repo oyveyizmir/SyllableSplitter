@@ -48,6 +48,7 @@ ng-
  */
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.SymbolStore;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -69,6 +70,7 @@ namespace SyllableSplitter
 
             Configuration conf = Configuration.Read(args[0]);
             var syllableBreaker = new SyllableBreaker(conf);
+            syllableBreaker.TraceOn = true;
             WordReader reader = new WordReader(args.Length >= 2 ? args[1] : null);
 
             string word;
@@ -136,15 +138,7 @@ namespace SyllableSplitter
 
         private static void PrintSyllables(List<Syllable> syllables)
         {
-            bool first = true;
-            foreach (var syllable in syllables)
-            {
-                if (!first)
-                    Console.Write("-");
-                Console.Write(syllable);
-                first = false;
-            }
-            Console.WriteLine();
+            Console.WriteLine(SyllableBreaker.ToString(syllables));
         }
     }
 }
