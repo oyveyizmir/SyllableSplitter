@@ -69,8 +69,7 @@ namespace SyllableSplitter
             }
 
             Configuration conf = Configuration.Read(args[0]);
-            var syllableBreaker = new SyllableBreaker(conf);
-            syllableBreaker.TraceOn = true;
+            var syllableBreaker = new SyllableBreaker(conf, true);
             WordReader reader = new WordReader(args.Length >= 2 ? args[1] : null);
 
             string word;
@@ -81,11 +80,11 @@ namespace SyllableSplitter
                 if (processedWords.Contains(word))
                     continue;
                 processedWords.Add(word);
-                Console.Write($"{word}=");
+                
                 try
                 {
                     var syllables = syllableBreaker.BreakWord(word);
-                    PrintSyllables(syllables);
+                    Console.WriteLine($"{word}={SyllableBreaker.ToString(syllables)}");
                 }
                 catch(ArgumentException e)
                 {
@@ -134,11 +133,6 @@ namespace SyllableSplitter
                 writer.Write(string.Join("-", word));
                 first = false;
             }
-        }
-
-        private static void PrintSyllables(List<Syllable> syllables)
-        {
-            Console.WriteLine(SyllableBreaker.ToString(syllables));
         }
     }
 }

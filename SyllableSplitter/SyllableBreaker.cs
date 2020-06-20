@@ -27,8 +27,10 @@ namespace SyllableSplitter
 
         public bool TraceOn { get; set; }
 
-        public SyllableBreaker(Configuration conf)
+        public SyllableBreaker(Configuration conf, bool traceOn = false)
         {
+            TraceOn = traceOn;
+
             if (conf.Vowels == null)
                 throw new ArgumentException("Vowels");
             if (conf.Consonants == null)
@@ -51,7 +53,7 @@ namespace SyllableSplitter
 
             vowels = ExpandLetterClasses(conf.Vowels).Split(',');
             consonants = ExpandLetterClasses(conf.Consonants).Split(',');
-            alphabet = vowels.Concat(consonants).ToArray();
+            alphabet = consonants.Concat(vowels).ToArray();
             prefixes = conf.Prefixes?.Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             separators = conf.Separators?.ToCharArray();
 
@@ -81,11 +83,14 @@ namespace SyllableSplitter
                     if (codeTerm == "" && onsetTerm == "")
                         continue;
 
-                    string codaPattern = codeTerm != "" ? "(?<termCoda>" + ToLetterRegex(codeTerm) + ")" : "";
-                    string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + ToLetterRegex(onsetTerm) + ")" : "";
+                    string codaPattern = codeTerm != "" ? "(?<termCoda>" + ToLetterRegex2(codeTerm) + ")" : "";
+                    string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + ToLetterRegex2(onsetTerm) + ")" : "";
 
                     var splitRuleRegex = new Regex("^" + codaPattern + onsetPattern + "$", RegexOptions.Compiled);
                     splitRules.Add(splitRuleRegex);
+
+                    if (TraceOn)
+                        Console.WriteLine($"Split rule {rule} => {splitRuleRegex}");
                 }
         }
 
@@ -158,7 +163,49 @@ namespace SyllableSplitter
             return sb.ToString();
         }
 
-        private string LetterClassToRegex(string[] letterClass) => "(?:" + string.Join("|", letterClass) + ")";
+        private string ToLetterRegex2(string pattern)
+        {
+            var sb = new StringBuilder();
+
+            //TODO: expand letter classes into (?:\[au\]|\[eu\]|\[oi\])
+            for (int i = 0; i < pattern.Length;)
+            {
+                bool found = false;
+
+                //TODO: expand letter classes into (?:\[au\]|\[eu\]|\[oi\])
+                foreach (var letterClass in letterClasses)
+                    if ((i + letterClass.Key.Length <= pattern.Length) && pattern.Substring(i, letterClass.Key.Length) == letterClass.Key)
+                    {
+                        string letterClassPattern = LetterClassToRegex(letterClass.Value);
+                        sb.Append(letterClassPattern);
+                        i += letterClass.Key.Length;
+                        found = true;
+                        break;
+                    }
+
+                if (found)
+                    continue;
+
+                foreach (string letter in alphabet)
+                    if ((i + letter.Length <= pattern.Length) && pattern.Substring(i, letter.Length) == letter)
+                    {
+                        sb.Append(@"(?:\[" + letter + @"\])");
+                        i += letter.Length;
+                        found = true;
+                        break;
+                    }
+
+                if (found)
+                    continue;
+
+                sb.Append(pattern[i++].ToString());
+            }
+
+            sb.Replace(".", @"(?:\[[^\]]+\])");
+            return sb.ToString();
+        }
+
+        private string LetterClassToRegex(string[] letterClass) => "(?:" + string.Join("|", letterClass.Select(x => @"\[" + x + @"\]")) + ")";
 
         private void ParseRewriteRule(string searchPattern, string replacementTerm, string searchContext)
         {
@@ -350,22 +397,19 @@ namespace SyllableSplitter
                 }
             }
 
-            if (TraceOn)
-                Console.WriteLine("Applying split rules");
-
             for (int i = firstSyllableIndex; i < syllables.Count - 1; i++)
             {
                 Syllable current = syllables[i];
                 Syllable next = syllables[i + 1];
+                string cluster = BracketLetters(current.Coda);
 
                 if (TraceOn)
-                    Console.WriteLine($"Splitting cluster {ToString(current.Coda)}");
+                    Console.WriteLine($"Splitting cluster {cluster}");
 
                 for (int j = 0; j < splitRules.Count; j++)
                 {
                     var rule = splitRules[j];
 
-                    string cluster = BracketLetters(current.Coda);
                     var match = rule.Match(cluster);
                     if (match.Success)
                     {
@@ -376,7 +420,7 @@ namespace SyllableSplitter
                         next.Onset = UnbracketLetters(onset);
 
                         if (TraceOn)
-                            Console.WriteLine($"Rule {conf.SplitRules[j]} matched. Coda: {ToString(current.Coda)}, Onset: {ToString(next.Onset)}");
+                            Console.WriteLine($"Rule {conf.SplitRules[j]} matched: {coda}/{onset}");
 
                         break;
                     }
@@ -427,28 +471,14 @@ namespace SyllableSplitter
             {
                 bool found = false;
 
-                if (consonants != null)
-                    foreach (string letter in consonants)
-                        if ((i + letter.Length <= word.Length) && word.Substring(i, letter.Length) == letter)
-                        {
-                            letters.Add(letter);
-                            i += letter.Length;
-                            found = true;
-                            break;
-                        }
-
-                if (found)
-                    continue;
-
-                if (vowels != null)
-                    foreach (string letter in vowels)
-                        if ((i + letter.Length <= word.Length) && word.Substring(i, letter.Length) == letter)
-                        {
-                            letters.Add(letter);
-                            i += letter.Length;
-                            found = true;
-                            break;
-                        }
+                foreach (string letter in alphabet)
+                    if ((i + letter.Length <= word.Length) && word.Substring(i, letter.Length) == letter)
+                    {
+                        letters.Add(letter);
+                        i += letter.Length;
+                        found = true;
+                        break;
+                    }
 
                 if (found)
                     continue;
