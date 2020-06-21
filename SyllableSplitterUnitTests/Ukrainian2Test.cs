@@ -9,12 +9,12 @@ using SyllableSplitter;
 namespace SyllableSplitterUnitTests
 {
     [TestFixture]
-    public class UkrainianTest : RuleTestBase
+    public class Ukrainian2Test : RuleTestBase
     {
-        protected override string RuleFileName => "ukrainian.json";
+        protected override string RuleFileName => "ukrainian2.json";
 
         [Test]
-        [TestCaseSource("GetTestData", new object[] { "Ukrainian.csv" })]
+        [TestCaseSource("GetTestData", new object[] { "Ukrainian2.csv" })]
         public void TestBreakWord(string word, string expected) => BreakWord(word, expected);
     }
 }

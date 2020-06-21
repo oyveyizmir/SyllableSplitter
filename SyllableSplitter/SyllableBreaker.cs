@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using SyllableSplitter.Extensions;
 
 namespace SyllableSplitter
 {
@@ -78,13 +79,14 @@ namespace SyllableSplitter
                 foreach (var rule in conf.SplitRules)
                 {
                     var ruleTerms = rule.Split('/');
+                    //TODO: check rule format
                     string codeTerm = ruleTerms[0];
                     string onsetTerm = ruleTerms[1];
                     if (codeTerm == "" && onsetTerm == "")
                         continue;
 
-                    string codaPattern = codeTerm != "" ? "(?<termCoda>" + ToLetterRegex2(codeTerm) + ")" : "";
-                    string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + ToLetterRegex2(onsetTerm) + ")" : "";
+                    string codaPattern = codeTerm != "" ? "(?<termCoda>" + ToLetterRegex(codeTerm) + ")" : "";
+                    string onsetPattern = onsetTerm != "" ? "(?<termOnset>" + ToLetterRegex(onsetTerm) + ")" : "";
 
                     var splitRuleRegex = new Regex("^" + codaPattern + onsetPattern + "$", RegexOptions.Compiled);
                     splitRules.Add(splitRuleRegex);
@@ -146,56 +148,21 @@ namespace SyllableSplitter
 
         private string ToLetterRegex(string pattern)
         {
-            var sb = new StringBuilder(pattern);
-
-            //TODO: expand letter classes into (?:\[au\]|\[eu\]|\[oi\])
-            foreach (var letterClass in letterClasses)
-            {
-                string letterClassPattern = LetterClassToRegex(letterClass.Value);
-                sb.Replace(letterClass.Key, letterClassPattern);
-            }
-
-            //TODO: expand letters into (?:\[ng\])
-            foreach (string letter in alphabet)
-                sb.Replace(letter, @"(?:\[" + letter + @"\])");
-
-            sb.Replace(".", @"(?:\[[^\]]+\])");
-            return sb.ToString();
-        }
-
-        private string ToLetterRegex2(string pattern)
-        {
             var sb = new StringBuilder();
 
-            //TODO: expand letter classes into (?:\[au\]|\[eu\]|\[oi\])
+            
             for (int i = 0; i < pattern.Length;)
             {
-                bool found = false;
-
-                //TODO: expand letter classes into (?:\[au\]|\[eu\]|\[oi\])
-                foreach (var letterClass in letterClasses)
-                    if ((i + letterClass.Key.Length <= pattern.Length) && pattern.Substring(i, letterClass.Key.Length) == letterClass.Key)
+                //Expand letter classes into (?:\[au\]|\[eu\]|\[oi\])
+                if (letterClasses.Parse(pattern, ref i, x => x.Key, x =>
                     {
-                        string letterClassPattern = LetterClassToRegex(letterClass.Value);
+                        string letterClassPattern = LetterClassToRegex(x.Value);
                         sb.Append(letterClassPattern);
-                        i += letterClass.Key.Length;
-                        found = true;
-                        break;
-                    }
-
-                if (found)
+                    }))
                     continue;
 
-                foreach (string letter in alphabet)
-                    if ((i + letter.Length <= pattern.Length) && pattern.Substring(i, letter.Length) == letter)
-                    {
-                        sb.Append(@"(?:\[" + letter + @"\])");
-                        i += letter.Length;
-                        found = true;
-                        break;
-                    }
-
-                if (found)
+                //Expand letters into (?:\[ng\])
+                if (alphabet.Parse(pattern, ref i, x => sb.Append(@"(?:\[" + x + @"\])")))
                     continue;
 
                 sb.Append(pattern[i++].ToString());
@@ -468,23 +435,8 @@ namespace SyllableSplitter
             var letters = new List<string>();
 
             for (int i = 0; i < word.Length;)
-            {
-                bool found = false;
-
-                foreach (string letter in alphabet)
-                    if ((i + letter.Length <= word.Length) && word.Substring(i, letter.Length) == letter)
-                    {
-                        letters.Add(letter);
-                        i += letter.Length;
-                        found = true;
-                        break;
-                    }
-
-                if (found)
-                    continue;
-
-                letters.Add(word[i++].ToString());
-            }
+                if (!alphabet.Parse(word, ref i, x => letters.Add(x)))
+                    letters.Add(word[i++].ToString());
 
             return letters;
         }
