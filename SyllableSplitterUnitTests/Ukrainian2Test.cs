@@ -44,5 +44,9 @@ namespace SyllableSplitterUnitTests
         [Test]
         [TestCaseSource("GetTestData", new object[] { "Ukrainian2-дз-гл.csv" })]
         public void TestДзвінкийГлухий(string word, string expected) => BreakWord(word, expected);
+
+        [Test]
+        [TestCaseSource("GetTestData", new object[] { "Ukrainian2-сон-дз.csv" })]
+        public void TestСонорнийДзвінкий(string word, string expected) => BreakWord(word, expected);
     }
 }
