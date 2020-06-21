@@ -56,6 +56,14 @@
   <ItemGroup>
     <EmbeddedResource Include="Data\Ukrainian.csv" />
     <EmbeddedResource Include="Data\Ukrainian2.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-дз-сон.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-гл-гл.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-гл-сон.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-сон-гл.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-сон-сон.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-гл-гл-сон.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-дз-дз.csv" />
+    <EmbeddedResource Include="Data\Ukrainian2-дз-гл.csv" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
