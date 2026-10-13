@@ -64,7 +64,7 @@ namespace SyllableSplitter
 
             if (args.Length < 1)
             {
-                Console.WriteLine("Usage: SyllableSplitter.exe <ConfigFile> [<TextFile>]");
+                Console.WriteLine("Usage: dotnet SyllableSplitter.dll <ConfigFile> [<TextFile>]");
                 return;
             }
 

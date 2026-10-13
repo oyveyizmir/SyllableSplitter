@@ -2,7 +2,7 @@
 
 ## Project overview
 
-SyllableSplitter is a C# console application that splits words into syllables using configurable language rules and collects consonant-cluster statistics. The solution contains two SDK-style projects targeting **.NET Framework 4.8 (`net48`)**; it is not a modern .NET runtime application.
+SyllableSplitter is a C# console application that splits words into syllables using configurable language rules and collects consonant-cluster statistics. The solution contains two SDK-style projects targeting **.NET 10 (`net10.0`)**.
 
 ## Repository map
 
@@ -20,7 +20,7 @@ SyllableSplitter is a C# console application that splits words into syllables us
 
 ## Build and validation
 
-Use Windows with a .NET SDK that can build the SDK-style projects, .NET Framework 4.8 reference assemblies (Developer/Targeting Pack), and the .NET Framework runtime for executing tests and the application. No SDK version is pinned in `global.json`.
+Use the .NET 10 SDK selected by `global.json`: 10.0.402 with `latestPatch` roll-forward and prereleases disabled. A later patch in the same SDK feature band is accepted. The .NET Framework Developer/Targeting Pack is not required. Build and test with the .NET CLI on supported Windows, Linux, or macOS systems; published framework-dependent output requires the .NET 10 runtime.
 
 Run these commands from the repository root:
 
@@ -47,12 +47,14 @@ Dependencies are managed through `PackageReference` in the project files: Newton
 After a Debug build, a sample invocation from the repository root is:
 
 ```powershell
-& .\SyllableSplitter\bin\Debug\net48\SyllableSplitter.exe .\SyllableSplitter\Config\ukrainian2.json .\SyllableSplitter\Text\ua_iliad.txt
+dotnet .\SyllableSplitter\bin\Debug\net10.0\SyllableSplitter.dll .\SyllableSplitter\Config\ukrainian2.json .\SyllableSplitter\Text\ua_iliad.txt
 ```
 
 The first argument is the config path; the optional second argument is a text file. Omitting the text file reads stdin. The CLI lowercases words and processes each distinct word once. It prints `word=syll-a-bles` and currently enables tracing, so stdout also contains diagnostic lines.
 
 Each completed run writes or overwrites `clusters_by_count.txt` and `clusters_by_length.txt` in the **current working directory**. For smoke tests, use a temporary working directory and absolute paths to the executable, configuration, and input. Do not commit these generated reports.
+
+Publish with `dotnet publish SyllableSplitter/SyllableSplitter.csproj --configuration Release --self-contained false --output artifacts/publish`. Language configs and sample texts are explicitly copied to publish output. Keep generated publish artifacts out of commits.
 
 ## Language-rule constraints
 
@@ -77,7 +79,7 @@ Each completed run writes or overwrites `clusters_by_count.txt` and `clusters_by
 
 ## Coding and change scope
 
-- Follow the existing C# style: four-space indentation, braces on their own lines, block namespaces, PascalCase types/methods/public members, and camelCase parameters/private fields. Keep additions compatible with the default C# 7.3 language level for this target.
+- Follow the existing C# style: four-space indentation, braces on their own lines, block namespaces, PascalCase types/methods/public members, and camelCase parameters/private fields. The target uses the .NET 10 SDK's default C# language version; nullable annotations and implicit usings are not enabled. Avoid unrelated syntax modernization.
 - Preserve existing public configuration fields and JSON names unless a schema/API change is requested. Avoid unrelated field-to-property conversions, formatting sweeps, and dependency upgrades.
 - Both projects set `GenerateAssemblyInfo=false`; assembly metadata is maintained in `Properties/AssemblyInfo.cs`.
 - Do not retarget the projects or migrate test frameworks as part of unrelated work. SDK-style source inclusion means ordinary new `.cs` files do not require explicit `Compile` entries.

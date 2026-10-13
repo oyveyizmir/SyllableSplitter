@@ -44,15 +44,46 @@ Example configs:
 
 ## Usage
 
-Run with a configuration JSON file and an optional text file. If the text file is omitted,
-words are read from standard input.
+Both projects target .NET 10. Install the .NET 10 SDK selected by `global.json`
+(10.0.402 or a later patch in the same SDK feature band) to build and test the solution.
+The .NET Framework Developer Pack is no longer required.
+
+From the repository root:
 
 ```powershell
-SyllableSplitter.exe <ConfigFile> [<TextFile>]
+dotnet restore SyllableSplitter.sln
+dotnet build SyllableSplitter.sln --no-restore
+dotnet test SyllableSplitter.sln --no-restore
+```
+
+Run with a configuration JSON file and an optional text file. Arguments after `--`
+are passed to the application. If the text file is omitted, words are read from standard input.
+
+```powershell
+dotnet run --project SyllableSplitter -- <ConfigFile> [<TextFile>]
 ```
 
 Example:
 
 ```powershell
-SyllableSplitter.exe SyllableSplitter\Config\ukrainian.json input.txt
+dotnet run --project SyllableSplitter -- SyllableSplitter/Config/ukrainian.json SyllableSplitter/Text/ua_iliad.txt
 ```
+
+The CLI currently enables tracing, so console output also includes diagnostic lines.
+The cluster reports are written to the current working directory.
+
+## Publish
+
+Create a framework-dependent Release build with its language configurations and sample texts:
+
+```powershell
+dotnet publish SyllableSplitter/SyllableSplitter.csproj --configuration Release --self-contained false --output artifacts/publish
+dotnet artifacts/publish/SyllableSplitter.dll artifacts/publish/Config/ukrainian2.json artifacts/publish/Text/ua_iliad.txt
+```
+
+The published application requires the .NET 10 runtime. On Windows, it also includes
+`SyllableSplitter.exe`; on Linux or macOS, the native launcher is `SyllableSplitter`.
+The `dotnet SyllableSplitter.dll` invocation works across platforms when the matching runtime is installed.
+
+The existing GitHub Actions demonstration workflow does not build or test the solution;
+run the validation commands above before submitting changes.
