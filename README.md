@@ -87,3 +87,5 @@ The `dotnet SyllableSplitter.dll` invocation works across platforms when the mat
 
 The existing GitHub Actions demonstration workflow does not build or test the solution;
 run the validation commands above before submitting changes.
+
+THE END
